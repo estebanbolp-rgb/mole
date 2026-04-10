@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Big Dig Underground - Interactive Storybook</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --warm-cream: #FFF8F0;
+      --soft-brown: #8B6914;
+      --earth-dark: #4A3728;
+      --golden: #DAA520;
+      --page-shadow: rgba(74, 55, 40, 0.15);
+      --accent-green: #6B8E23;
+      --accent-pink: #E8A0BF;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(135deg, #2c1810 0%, #4a2c1a 30%, #3d2412 60%, #1a0e08 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Floating particles background */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float-particle linear infinite;
+      opacity: 0.3;
+    }
+
+    @keyframes float-particle {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Start screen */
+    .start-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #2c1810 0%, #5c3a1e 50%, #2c1810 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .start-screen.hidden {
+      opacity: 0;
+      transform: scale(1.1);
+      pointer-events: none;
+    }
+
+    .start-screen h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 3.5rem;
+      color: var(--golden);
+      text-align: center;
+      text-shadow: 0 4px 20px rgba(218, 165, 32, 0.4);
+      margin-bottom: 0.5rem;
+      animation: title-glow 3s ease-in-out infinite;
+    }
+
+    .start-screen .subtitle {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.5rem;
+      color: var(--warm-cream);
+      opacity: 0.8;
+      margin-bottom: 3rem;
+    }
+
+    @keyframes title-glow {
+      0%, 100% { text-shadow: 0 4px 20px rgba(218, 165, 32, 0.4); }
+      50% { text-shadow: 0 4px 40px rgba(218, 165, 32, 0.7), 0 0 60px rgba(218, 165, 32, 0.3); }
+    }
+
+    .start-btn {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      padding: 18px 50px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, var(--golden), #c4941a);
+      color: var(--earth-dark);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 30px rgba(218, 165, 32, 0.4);
+      animation: pulse-btn 2s ease-in-out infinite;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 12px 40px rgba(218, 165, 32, 0.6);
+    }
+
+    @keyframes pulse-btn {
+      0%, 100% { box-shadow: 0 8px 30px rgba(218, 165, 32, 0.4); }
+      50% { box-shadow: 0 8px 50px rgba(218, 165, 32, 0.7); }
+    }
+
+    .start-decoration {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(218, 165, 32, 0.1) 0%, transparent 70%);
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .start-decoration:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+    .start-decoration:nth-child(2) { top: 60%; right: 10%; animation-delay: 2s; width: 150px; height: 150px; }
+    .start-decoration:nth-child(3) { bottom: 10%; left: 30%; animation-delay: 4s; width: 180px; height: 180px; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-20px) scale(1.1); }
+    }
+
+    /* Book container */
+    .book-container {
+      position: relative;
+      width: 90vw;
+      max-width: 1100px;
+      height: 85vh;
+      max-height: 700px;
+      perspective: 2000px;
+      z-index: 1;
+    }
+
+    .book {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: var(--warm-cream);
+      border-radius: 8px 20px 20px 8px;
+      box-shadow:
+        -5px 0 15px var(--page-shadow),
+        5px 0 15px var(--page-shadow),
+        0 10px 40px rgba(0,0,0,0.3),
+        inset -3px 0 10px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    /* Book spine */
+    .book::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 30px;
+      height: 100%;
+      background: linear-gradient(90deg, #8B6914, #A0782C, #8B6914);
+      z-index: 10;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    }
+
+    /* Page texture */
+    .book::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 30px;
+      right: 0;
+      bottom: 0;
+      background: 
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 28px,
+          rgba(139, 105, 20, 0.03) 28px,
+          rgba(139, 105, 20, 0.03) 29px
+        );
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Scene Pages */
+    .scene {
+      position: absolute;
+      top: 0;
+      left: 30px;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 50px 90px;
+      opacity: 0;
+      transform: translateX(50px);
+      transition: opacity 1.2s ease, transform 1.2s ease;
+      z-index: 1;
+      overflow-y: auto;
+    }
+
+    .scene.active {
+      opacity: 1;
+      transform: translateX(0);
+      z-index: 2;
+    }
+
+    .scene.exit-left {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+
+    .scene-number {
+      position: absolute;
+      top: 15px;
+      right: 25px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1rem;
+      color: var(--soft-brown);
+      opacity: 0.5;
+    }
+
+    .scene-image-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      flex-shrink: 0;
+      margin-bottom: 25px;
+    }
+
+    .scene-image {
+      width: 100%;
+      height: auto;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 15px;
+      box-shadow: 0 8px 30px rgba(74, 55, 40, 0.2);
+      border: 4px solid rgba(139, 105, 20, 0.15);
+      animation: image-breathe 4s ease-in-out infinite;
+    }
+
+    @keyframes image-breathe {
+      0%, 100% { box-shadow: 0 8px 30px rgba(74, 55, 40, 0.2); }
+      50% { box-shadow: 0 12px 40px rgba(74, 55, 40, 0.3); }
+    }
+
+    /* Image decorative frame */
+    .scene-image-wrapper::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      right: -6px;
+      bottom: -6px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--golden), transparent, var(--golden));
+      opacity: 0.2;
+      z-index: -1;
+    }
+
+    .scene-text {
+      text-align: center;
+      max-width: 600px;
+    }
+
+    .scene-text h2 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.6rem;
+      color: var(--earth-dark);
+      margin-bottom: 12px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease 0.5s, transform 0.8s ease 0.5s;
+    }
+
+    .scene.active .scene-text h2 {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .scene-text p {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.35rem;
+      color: var(--earth-dark);
+      line-height: 1.7;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease 0.8s, transform 0.8s ease 0.8s;
+    }
+
+    .scene.active .scene-text p {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .scene-text .dialogue {
+      font-style: italic;
+      color: var(--soft-brown);
+      margin-top: 8px;
+      font-size: 1.25rem;
+    }
+
+    .scene-text .bold-word {
+      font-weight: 700;
+      color: var(--golden);
+      font-size: 1.05em;
+    }
+
+    .scene-text .sound-effect {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      color: var(--golden);
+      display: block;
+      margin-top: 10px;
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px) rotate(-2deg); }
+      75% { transform: translateX(5px) rotate(2deg); }
+    }
+
+    /* Navigation */
+    .nav-controls {
+      position: absolute;
+      bottom: 0;
+      left: 30px;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 10;
+      padding: 12px 20px;
+      background: linear-gradient(0deg, var(--warm-cream) 60%, transparent 100%);
+    }
+
+    .nav-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--soft-brown);
+      background: var(--warm-cream);
+      color: var(--earth-dark);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px var(--page-shadow);
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: var(--golden);
+      color: white;
+      border-color: var(--golden);
+      transform: scale(1.1);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .play-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 3px solid var(--golden);
+      background: linear-gradient(135deg, var(--golden), #c4941a);
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(218, 165, 32, 0.4);
+    }
+
+    .play-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 25px rgba(218, 165, 32, 0.6);
+    }
+
+    .play-btn.playing {
+      animation: pulse-play 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-play {
+      0%, 100% { box-shadow: 0 4px 15px rgba(218, 165, 32, 0.4); }
+      50% { box-shadow: 0 4px 30px rgba(218, 165, 32, 0.8); }
+    }
+
+    /* Progress dots */
+    .progress-dots {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(139, 105, 20, 0.2);
+      transition: all 0.4s ease;
+    }
+
+    .dot.active {
+      background: var(--golden);
+      width: 28px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(218, 165, 32, 0.5);
+    }
+
+    .dot.completed {
+      background: var(--accent-green);
+    }
+
+    /* Volume control */
+    .volume-control {
+      position: absolute;
+      top: 15px;
+      right: 60px;
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .vol-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(139, 105, 20, 0.1);
+      color: var(--soft-brown);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .vol-btn:hover {
+      background: rgba(139, 105, 20, 0.2);
+    }
+
+    /* Title overlay for scenes */
+    .chapter-title {
+      position: absolute;
+      top: 15px;
+      left: 50px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.9rem;
+      color: var(--soft-brown);
+      opacity: 0.4;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      z-index: 5;
+    }
+
+    /* Speaking indicator */
+    .speaking-indicator {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+      align-items: flex-end;
+      height: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+    }
+
+    .speaking-indicator.active {
+      opacity: 1;
+    }
+
+    .speaking-bar {
+      width: 4px;
+      background: var(--golden);
+      border-radius: 2px;
+      animation: speak-bar 0.8s ease-in-out infinite;
+    }
+
+    .speaking-bar:nth-child(1) { animation-delay: 0s; height: 8px; }
+    .speaking-bar:nth-child(2) { animation-delay: 0.15s; height: 14px; }
+    .speaking-bar:nth-child(3) { animation-delay: 0.3s; height: 10px; }
+    .speaking-bar:nth-child(4) { animation-delay: 0.45s; height: 16px; }
+    .speaking-bar:nth-child(5) { animation-delay: 0.6s; height: 6px; }
+
+    @keyframes speak-bar {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(0.4); }
+    }
+
+    /* End screen */
+    .end-overlay {
+      position: absolute;
+      top: 0;
+      left: 30px;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 248, 240, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1s ease;
+      z-index: 20;
+      backdrop-filter: blur(5px);
+    }
+
+    .end-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .end-overlay h2 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.5rem;
+      color: var(--golden);
+      margin-bottom: 15px;
+    }
+
+    .end-overlay p {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.4rem;
+      color: var(--earth-dark);
+      margin-bottom: 30px;
+    }
+
+    .restart-btn {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      padding: 14px 40px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, var(--accent-green), #4a6b13);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 20px rgba(107, 142, 35, 0.4);
+    }
+
+    .restart-btn:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 30px rgba(107, 142, 35, 0.6);
+    }
+
+    /* Stars animation for end screen */
+    .stars {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      font-size: 1.5rem;
+      animation: star-fall 3s ease-in-out infinite;
+    }
+
+    @keyframes star-fall {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(20px) rotate(360deg); opacity: 0; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .book-container {
+        width: 95vw;
+        height: 90vh;
+      }
+
+      .scene {
+        padding: 25px 20px 70px;
+      }
+
+      .scene-image {
+        max-height: 220px;
+      }
+
+      .scene-text h2 {
+        font-size: 1.2rem;
+      }
+
+      .scene-text p {
+        font-size: 1.1rem;
+      }
+
+      .start-screen h1 {
+        font-size: 2rem;
+        padding: 0 20px;
+      }
+
+      .nav-controls {
+        bottom: 10px;
+      }
+
+      .book::before {
+        width: 15px;
+      }
+
+      .scene {
+        left: 15px;
+      }
+
+      .chapter-title {
+        left: 25px;
+      }
+    }
+
+    /* Page turn animation */
+    .page-turn-overlay {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(139, 105, 20, 0.05), var(--warm-cream));
+      z-index: 15;
+      pointer-events: none;
+      transition: width 0.6s ease;
+    }
+
+    .page-turn-overlay.turning {
+      animation: page-turn 0.8s ease;
+    }
+
+    @keyframes page-turn {
+      0% { width: 0; right: 0; }
+      50% { width: 100%; right: 0; }
+      51% { width: 100%; right: 0; }
+      100% { width: 0; right: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Start Screen -->
+  <div class="start-screen" id="startScreen">
+    <div class="start-decoration"></div>
+    <div class="start-decoration"></div>
+    <div class="start-decoration"></div>
+    <h1>📖 The Big Dig<br>Underground</h1>
+    <p class="subtitle">An interactive storybook with narration</p>
+    <button class="start-btn" id="startBtn" onclick="startStory()">
+      ▶ Start Story
+    </button>
+  </div>
+
+  <!-- Book -->
+  <div class="book-container">
+    <div class="book" id="book">
+      <div class="chapter-title">The Big Dig Underground</div>
+      
+      <div class="page-turn-overlay" id="pageTurn"></div>
+
+      <!-- Scene 1: Mole digging -->
+      <div class="scene active" id="scene-0" data-scene="0">
+        <span class="scene-number">1 / 6</span>
+        <div class="scene-image-wrapper">
+          <img src="images/scene1.png" alt="A mole digging underground" class="scene-image">
+        </div>
+        <div class="scene-text">
+          <h2>🔦 The Little Mole</h2>
+          <p>In a big, dark place under the ground, a little <span class="bold-word">mole</span> liked to dig in the <span class="bold-word">mud</span>. He had a small <span class="bold-word">map</span> that showed secret tunnels.</p>
+        </div>
+      </div>
+
+      <!-- Scene 2: Mole meets Pig -->
+      <div class="scene" id="scene-1" data-scene="1">
+        <span class="scene-number">2 / 6</span>
+        <div class="scene-image-wrapper">
+          <img src="images/scene2.png" alt="The mole meets a pig" class="scene-image">
+        </div>
+        <div class="scene-text">
+          <h2>🐷 A New Friend</h2>
+          <p>One day, the mole met a <span class="bold-word">pig</span>.</p>
+          <p class="dialogue">"I <span class="bold-word">can</span> dig with you!" said the pig.</p>
+        </div>
+      </div>
+
+      <!-- Scene 3: Man arrives -->
+      <div class="scene" id="scene-2" data-scene="2">
+        <span class="scene-number">3 / 6</span>
+        <div class="scene-image-wrapper">
+          <img src="images/scene3.png" alt="A man comes to help" class="scene-image">
+        </div>
+        <div class="scene-text">
+          <h2>👨 The Friendly Man</h2>
+          <p>Soon, a <span class="bold-word">man</span> came by. He had a <span class="bold-word">net</span>.</p>
+          <p class="dialogue">"I am not here to catch you. I want to help!" said the man.</p>
+        </div>
+      </div>
+
+      <!-- Scene 4: Ant with pen -->
+      <div class="scene" id="scene-3" data-scene="3">
+        <span class="scene-number">4 / 6</span>
+        <div class="scene-image-wrapper">
+          <img src="images/scene4.png" alt="An ant carrying a pen" class="scene-image">
+        </div>
+        <div class="scene-text">
+          <h2>🐜 The Clever Ant</h2>
+          <p>As they walked, they saw an <span class="bold-word">ant</span> carrying a <span class="bold-word">pen</span>.</p>
+          <p class="dialogue">"I use this pen to draw paths," said the ant.</p>
+        </div>
+      </div>
+
+      <!-- Scene 5: Find pot -->
+      <div class="scene" id="scene-4" data-scene="4">
+        <span class="scene-number">5 / 6</span>
+        <div class="scene-image-wrapper">
+          <img src="images/scene5.png" alt="They find a pot" class="scene-image">
+        </div>
+        <div class="scene-text">
+          <h2>🫕 The Mysterious Pot</h2>
+          <p>Then they found a <span class="bold-word">pot</span> in the mud.</p>
+          <p class="dialogue">"Let's dig!" said the mole.</p>
+          <p>The pig made a big hole. The mole dug fast. The man used his bat to tap the ground.</p>
+          <p class="dialogue">"Dig, dig, dig!" they all said.</p>
+          <p><span class="sound-effect">Suddenly... CLINK!</span></p>
+        </div>
+      </div>
+
+      <!-- Scene 6: Dog and Cat -->
+      <div class="scene" id="scene-5" data-scene="5">
+        <span class="scene-number">6 / 6</span>
+        <div class="scene-image-wrapper">
+          <img src="images/scene6.png" alt="A dog and a cat look at the pot" class="scene-image">
+        </div>
+        <div class="scene-text">
+          <h2>🐕 What Is in the Pot?</h2>
+          <p>The <span class="bold-word">cat</span> and the <span class="bold-word">dog</span> came to <span class="bold-word">sit</span> and watch.</p>
+          <p class="dialogue">"What is in the pot?" asked the dog.</p>
+          <p class="dialogue">"Is it gold? Is it food? Is it a map?" said the cat.</p>
+        </div>
+      </div>
+
+      <!-- End Overlay -->
+      <div class="end-overlay" id="endOverlay">
+        <div class="stars" id="starsContainer"></div>
+        <h2>⭐ The End! ⭐</h2>
+        <p>The Big Dig Underground</p>
+        <button class="restart-btn" onclick="restartStory()">🔄 Read Again</button>
+      </div>
+
+      <!-- Speaking indicator -->
+      <div class="speaking-indicator" id="speakingIndicator">
+        <div class="speaking-bar"></div>
+        <div class="speaking-bar"></div>
+        <div class="speaking-bar"></div>
+        <div class="speaking-bar"></div>
+        <div class="speaking-bar"></div>
+      </div>
+
+      <!-- Volume control -->
+      <div class="volume-control">
+        <button class="vol-btn" id="volBtn" onclick="toggleMute()" title="Mute/Unmute voice">🔊</button>
+      </div>
+
+      <!-- Navigation -->
+      <div class="nav-controls">
+        <button class="nav-btn" id="prevBtn" onclick="prevScene()" disabled title="Previous">◀</button>
+        <div class="progress-dots" id="progressDots">
+          <div class="dot active" data-dot="0"></div>
+          <div class="dot" data-dot="1"></div>
+          <div class="dot" data-dot="2"></div>
+          <div class="dot" data-dot="3"></div>
+          <div class="dot" data-dot="4"></div>
+          <div class="dot" data-dot="5"></div>
+        </div>
+        <button class="play-btn" id="playBtn" onclick="toggleAutoPlay()" title="Auto-play">▶</button>
+        <button class="nav-btn" id="nextBtn" onclick="nextScene()" title="Next">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============ STATE ============
+    let currentScene = 0;
+    const totalScenes = 6;
+    let isPlaying = false;
+    let autoPlayTimer = null;
+    let isMuted = false;
+    let speechSynth = window.speechSynthesis;
+    let currentUtterance = null;
+    let voicesLoaded = false;
+    let selectedVoice = null;
+
+    // ============ NARRATION TEXTS ============
+    const narrations = [
+      "In a big, dark place under the ground, a little mole liked to dig in the mud. He had a small map that showed secret tunnels.",
+      "One day, the mole met a pig. I can dig with you! said the pig.",
+      "Soon, a man came by. He had a net. I am not here to catch you. I want to help! said the man.",
+      "As they walked, they saw an ant carrying a pen. I use this pen to draw paths, said the ant.",
+      "Then they found a pot in the mud. Let's dig! said the mole. The pig made a big hole. The mole dug fast. Dig, dig, dig! they all said. Suddenly... CLINK!",
+      "The cat and the dog came to sit and watch. What is in the pot? asked the dog. Is it gold? Is it food? Is it a map? said the cat."
+    ];
+
+    // ============ VOICES SETUP ============
+    function loadVoices() {
+      const voices = speechSynth.getVoices();
+      if (voices.length > 0) {
+        voicesLoaded = true;
+        // Try to find an American English female voice (girl-like)
+        const usVoices = voices.filter(v => v.lang === 'en-US');
+        const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+        
+        // Priority: US female voices first
+        const femaleUS = usVoices.find(v => 
+          v.name.toLowerCase().includes('female') || 
+          v.name.toLowerCase().includes('zira') ||
+          v.name.toLowerCase().includes('samantha') ||
+          v.name.toLowerCase().includes('victoria') ||
+          v.name.toLowerCase().includes('jenny') ||
+          v.name.toLowerCase().includes('aria') ||
+          v.name.toLowerCase().includes('ana') ||
+          v.name.toLowerCase().includes('michelle') ||
+          v.name.toLowerCase().includes('girl') ||
+          v.name.toLowerCase().includes('emma') ||
+          v.name.toLowerCase().includes('ava')
+        );
+        
+        // Fallback: any English female voice
+        const femaleEnglish = englishVoices.find(v => 
+          v.name.toLowerCase().includes('female') || 
+          v.name.toLowerCase().includes('samantha') ||
+          v.name.toLowerCase().includes('karen') ||
+          v.name.toLowerCase().includes('hazel') ||
+          v.name.toLowerCase().includes('zira')
+        );
+        
+        selectedVoice = femaleUS || usVoices[0] || femaleEnglish || englishVoices[0] || null;
+        console.log('Selected voice:', selectedVoice?.name || 'default');
+        console.log('Available US voices:', usVoices.map(v => v.name));
+        console.log('Available English voices:', englishVoices.map(v => v.name));
+      }
+    }
+
+    if (speechSynth) {
+      speechSynth.onvoiceschanged = loadVoices;
+      loadVoices();
+    }
+
+    // ============ SPEECH ============
+    function speak(text, onEnd) {
+      if (!speechSynth || isMuted) {
+        if (onEnd) setTimeout(onEnd, 3000);
+        return;
+      }
+
+      speechSynth.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.15; // Slightly higher pitch for a young girl's voice
+      utterance.volume = 1;
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      utterance.onstart = () => {
+        document.getElementById('speakingIndicator').classList.add('active');
+      };
+
+      utterance.onend = () => {
+        document.getElementById('speakingIndicator').classList.remove('active');
+        if (onEnd) onEnd();
+      };
+
+      utterance.onerror = () => {
+        document.getElementById('speakingIndicator').classList.remove('active');
+        if (onEnd) setTimeout(onEnd, 1000);
+      };
+
+      currentUtterance = utterance;
+      speechSynth.speak(utterance);
+    }
+
+    function stopSpeaking() {
+      if (speechSynth) {
+        speechSynth.cancel();
+      }
+      document.getElementById('speakingIndicator').classList.remove('active');
+    }
+
+    // ============ SCENE MANAGEMENT ============
+    let isTransitioning = false;
+
+    function goToScene(index, direction = 'next') {
+      if (index < 0 || index >= totalScenes || isTransitioning) return;
+      isTransitioning = true;
+
+      stopSpeaking();
+
+      const pageTurn = document.getElementById('pageTurn');
+
+      // Page turn animation
+      pageTurn.classList.add('turning');
+      setTimeout(() => pageTurn.classList.remove('turning'), 800);
+
+      // Hide ALL scenes first
+      document.querySelectorAll('.scene').forEach(s => {
+        s.classList.remove('active', 'exit-left');
+      });
+
+      currentScene = index;
+      
+      // Show new scene after brief delay
+      setTimeout(() => {
+        document.getElementById(`scene-${index}`).classList.add('active');
+        isTransitioning = false;
+      }, 400);
+
+      // Update dots
+      updateDots();
+      updateNavButtons();
+
+      // Narrate after transition
+      setTimeout(() => {
+        speak(narrations[currentScene], () => {
+          if (isPlaying) {
+            if (currentScene < totalScenes - 1) {
+              autoPlayTimer = setTimeout(() => nextScene(), 2000);
+            } else {
+              showEndScreen();
+              stopAutoPlay();
+            }
+          }
+        });
+      }, 1500);
+    }
+
+    function nextScene() {
+      if (currentScene < totalScenes - 1) {
+        goToScene(currentScene + 1, 'next');
+      } else {
+        showEndScreen();
+      }
+    }
+
+    function prevScene() {
+      if (currentScene > 0) {
+        goToScene(currentScene - 1, 'prev');
+      }
+    }
+
+    function updateDots() {
+      const dots = document.querySelectorAll('.dot');
+      dots.forEach((dot, i) => {
+        dot.classList.remove('active', 'completed');
+        if (i === currentScene) dot.classList.add('active');
+        else if (i < currentScene) dot.classList.add('completed');
+      });
+    }
+
+    function updateNavButtons() {
+      document.getElementById('prevBtn').disabled = currentScene === 0;
+      document.getElementById('nextBtn').disabled = currentScene === totalScenes - 1;
+    }
+
+    // ============ AUTO PLAY ============
+    function toggleAutoPlay() {
+      if (isPlaying) {
+        stopAutoPlay();
+      } else {
+        startAutoPlay();
+      }
+    }
+
+    function startAutoPlay() {
+      isPlaying = true;
+      const btn = document.getElementById('playBtn');
+      btn.textContent = '⏸';
+      btn.classList.add('playing');
+      
+      // Start narration for current scene
+      speak(narrations[currentScene], () => {
+        if (isPlaying) {
+          if (currentScene < totalScenes - 1) {
+            autoPlayTimer = setTimeout(() => nextScene(), 2000);
+          } else {
+            showEndScreen();
+            stopAutoPlay();
+          }
+        }
+      });
+    }
+
+    function stopAutoPlay() {
+      isPlaying = false;
+      const btn = document.getElementById('playBtn');
+      btn.textContent = '▶';
+      btn.classList.remove('playing');
+      clearTimeout(autoPlayTimer);
+      stopSpeaking();
+    }
+
+    // ============ VOLUME ============
+    function toggleMute() {
+      isMuted = !isMuted;
+      const btn = document.getElementById('volBtn');
+      btn.textContent = isMuted ? '🔇' : '🔊';
+      if (isMuted) stopSpeaking();
+    }
+
+    // ============ START / END ============
+    function startStory() {
+      const startScreen = document.getElementById('startScreen');
+      startScreen.classList.add('hidden');
+      
+      setTimeout(() => {
+        speak(narrations[0]);
+      }, 1500);
+    }
+
+    function showEndScreen() {
+      const overlay = document.getElementById('endOverlay');
+      overlay.classList.add('active');
+      createStars();
+    }
+
+    function restartStory() {
+      const overlay = document.getElementById('endOverlay');
+      overlay.classList.remove('active');
+      
+      // Reset all scenes
+      document.querySelectorAll('.scene').forEach(s => {
+        s.classList.remove('active', 'exit-left');
+      });
+      
+      currentScene = 0;
+      document.getElementById('scene-0').classList.add('active');
+      updateDots();
+      updateNavButtons();
+      stopAutoPlay();
+      
+      setTimeout(() => speak(narrations[0]), 500);
+    }
+
+    function createStars() {
+      const container = document.getElementById('starsContainer');
+      container.innerHTML = '';
+      const emojis = ['⭐', '✨', '🌟', '💫'];
+      for (let i = 0; i < 15; i++) {
+        const star = document.createElement('span');
+        star.className = 'star';
+        star.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.animationDelay = Math.random() * 3 + 's';
+        star.style.animationDuration = (2 + Math.random() * 2) + 's';
+        container.appendChild(star);
+      }
+    }
+
+    // ============ PARTICLES ============
+    function createParticles() {
+      const container = document.getElementById('particles');
+      const colors = ['#DAA520', '#8B6914', '#D2691E', '#CD853F'];
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.width = (3 + Math.random() * 6) + 'px';
+        p.style.height = p.style.width;
+        p.style.left = Math.random() * 100 + '%';
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.animationDuration = (10 + Math.random() * 20) + 's';
+        p.style.animationDelay = Math.random() * 10 + 's';
+        container.appendChild(p);
+      }
+    }
+
+    // ============ KEYBOARD CONTROLS ============
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextScene();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevScene();
+      } else if (e.key === 'p' || e.key === 'P') {
+        toggleAutoPlay();
+      } else if (e.key === 'm' || e.key === 'M') {
+        toggleMute();
+      }
+    });
+
+    // ============ INIT ============
+    createParticles();
+  </script>
+</body>
+</html>
